@@ -1,0 +1,6 @@
+#include "../../Flutter/Flutter-Release.xcconfig"
+#include "Warnings.xcconfig"
+
+// Local ad-hoc previews still use release entitlements: do not let Xcode add
+// the development-only get-task-allow entitlement to the shipped application.
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO

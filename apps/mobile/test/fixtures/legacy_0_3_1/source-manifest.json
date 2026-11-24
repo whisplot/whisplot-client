@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "60048640d8efe8d9e72fc244ca0e93ea206fbf71",
+  "release": "0.3.1",
+  "files": {
+    "crypto_service.dart": {
+      "sourcePath": "apps/mobile/lib/core/crypto_service.dart",
+      "sha256": "847e1c52bfcdf8a24fec9c37c9406fa7596dd1596f85af1ea857f90e21064425",
+      "bytes": 12245
+    },
+    "models.dart": {
+      "sourcePath": "apps/mobile/lib/core/models.dart",
+      "sha256": "05c111840584e2683efb3795ec036f15e30019bfcce479445ca63e571017ff45",
+      "bytes": 22583
+    },
+    "temporary_id.dart": {
+      "sourcePath": "apps/mobile/lib/core/temporary_id.dart",
+      "sha256": "9aafffa5ab57aa827395ad75168d71a70f68a77ab69df6991a470e720960b0bc",
+      "bytes": 3217
+    }
+  }
+}

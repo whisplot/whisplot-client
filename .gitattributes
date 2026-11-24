@@ -1,0 +1,2 @@
+# Compatibility tests verify the original bytes of these released fixtures.
+/apps/mobile/test/fixtures/legacy_0_3_1/** -text

@@ -1,0 +1,21 @@
+Offline emoji artwork and catalog
+
+Twemoji 17.0.3 graphics by Twitter, Inc. and Twemoji contributors, maintained
+by Jason Sofonia and Justine De Caires. Graphics licensed under Creative Commons
+Attribution 4.0 International (CC BY 4.0).
+https://github.com/jdecked/twemoji/releases/tag/v17.0.3
+https://creativecommons.org/licenses/by/4.0/
+The selected original 72×72 PNGs are copied without modification. This App does
+not contact an emoji CDN and does not bundle Telegram custom emoji or stickers.
+
+Emoji strings, ordering and English names: Unicode Emoji 17.0 emoji-test.txt.
+Chinese names and bilingual keywords: Unicode CLDR release 48.
+These data are used under Unicode License V3; both upstream notices accompany
+the bundle. Generated metadata selects fully-qualified emoji and omits unused
+CLDR data. Unicode and the Unicode Logo are registered trademarks of Unicode,
+Inc. in the U.S. and other countries.
+https://www.unicode.org/Public/17.0.0/emoji/emoji-test.txt
+https://github.com/unicode-org/cldr/tree/release-48
+
+Reproduce with: python3 scripts/vendor_emojis.py
+Source hashes and per-image hashes are recorded in ../manifest.json.

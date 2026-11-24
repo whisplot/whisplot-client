@@ -1,0 +1,62 @@
+name: Build unsigned iOS artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Standard macOS runner
+        type: choice
+        default: macos-26-intel
+        options: [macos-26-intel, macos-26]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: ${{ inputs.runner }}
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - name: Inspect Xcode platform availability
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+      - name: Resolve Dart dependencies
+        working-directory: apps/mobile
+        run: |
+          for attempt in 1 2 3; do
+            if flutter pub get; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 5
+          done
+      - name: Build unsigned iPhoneOS release
+        working-directory: apps/mobile
+        run: flutter build ios --release --no-codesign --no-pub
+      - name: Package and verify unsigned IPA
+        run: |
+          ./scripts/package-ios-unsigned.sh
+          /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' apps/mobile/build/ios/iphoneos/Runner.app/Info.plist
+          xcrun lipo -archs apps/mobile/build/ios/iphoneos/Runner.app/Runner
+          shasum -a 256 artifacts/hello-mentor-*-ios-unsigned.ipa > artifacts/ios-SHA256SUMS.txt
+          printf '%s\n' 'Unsigned iPhoneOS artifact. It requires Apple signing and provisioning before installation. This build does not include Firebase/APNs credentials.' > artifacts/ios-UNSIGNED-NOTICE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hello-mentor-ios-unsigned
+          path: |
+            artifacts/hello-mentor-*-ios-unsigned.ipa
+            artifacts/ios-SHA256SUMS.txt
+            artifacts/ios-UNSIGNED-NOTICE.txt
+          if-no-files-found: error
+          retention-days: 7
