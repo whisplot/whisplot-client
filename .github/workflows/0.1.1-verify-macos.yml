@@ -1,0 +1,95 @@
+name: Verify signed Whisplot 0.1.1 upgrade
+on:
+  push:
+    branches: [codex/build-0.1.1]
+    paths: [.github/workflows/0.1.1-verify-macos.yml]
+permissions:
+  contents: read
+jobs:
+  signed-upgrade:
+    if: github.repository == 'whisplot/whisplot-client'
+    runs-on: macos-26-intel
+    timeout-minutes: 12
+    steps:
+      - name: Verify the signed universal package and upgrade existing local storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 --max-time 120 'https://github.com/whisplot/whisplot-client/releases/download/v0.1.0/whisplot-0.1.0-build18-macos-universal2.zip' -o old.zip
+          curl -fsSL --retry 4 --retry-all-errors --max-time 120 'https://release-011.whisplot-downloads.pages.dev/download/whisplot-0.1.1-build19-macos-universal2.zip' -o candidate.zip
+          printf '%s\n' '5facd34502630b51a28e7e48e316c0f783098ef4f801d7027da4915cb480435c  old.zip' '6e7b8b143feb102bd4dd9500e383a009a758c9adb12d490660ddbc6c3642f277  candidate.zip' | shasum -a 256 -c -
+          ditto -x -k old.zip running
+          ditto -x -k candidate.zip candidate
+          app="$RUNNER_TEMP/candidate/Whisplot.app"
+          codesign --verify --deep --strict --all-architectures "$app"
+          signer=778a1e14354a52cddf47c339728215c0ee86ea52
+          codesign --verify --strict -R="identifier \"com.nearlink.chat\" and certificate leaf = H\"$signer\"" "$app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = 0.1.1
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")" = 19
+          archs="$(lipo -archs "$app/Contents/MacOS/Whisplot")"
+          [[ " $archs " == *' x86_64 '* && " $archs " == *' arm64 '* ]]
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, signal, sqlite3, subprocess, time
+
+          directory = Path(os.environ['RUNNER_TEMP'])
+          app = directory / 'running/Whisplot.app'
+          exe = str((app / 'Contents/MacOS/Whisplot').resolve())
+          container = Path.home() / 'Library/Containers/com.nearlink.chat/Data'
+
+          def process():
+              for row in subprocess.check_output(['ps','-axww','-o','pid=,command='], text=True).splitlines():
+                  fields = row.strip().split(None, 1)
+                  if len(fields) == 2 and (fields[1] == exe or fields[1].startswith(exe + ' ')):
+                      return int(fields[0])
+
+          def state(path, note=False):
+              try:
+                  with sqlite3.connect(path.as_uri()+'?mode=ro', uri=True, timeout=2) as db:
+                      names = {row[0] for row in db.execute('SELECT name FROM local_state')}
+                      required = {'mac-secret-vault-v1', 'alias-rotation-v1'}
+                      if note:
+                          required.add('whisplot-upgrade-qa')
+                      return required.issubset(names)
+              except sqlite3.Error:
+                  return False
+
+          def wait_initialized(path=None):
+              for _ in range(90):
+                  files = [path] if path else container.glob('**/nearlink-v1.db')
+                  for file in files:
+                      if process() and state(file, note=path is not None):
+                          return file
+                  time.sleep(1)
+              raise RuntimeError('Whisplot did not initialize the expected local database')
+
+          def stop():
+              pid = process()
+              if not pid:
+                  return
+              os.kill(pid,signal.SIGTERM)
+              for _ in range(15):
+                  if not process():
+                      return
+                  time.sleep(1)
+              raise RuntimeError('QA client did not exit')
+
+          try:
+              subprocess.run(['open','-n',app],check=True)
+              before = wait_initialized()
+              stop()
+              with sqlite3.connect(before) as db:
+                  db.execute('INSERT INTO local_state (name,value) VALUES (?,?)', ('whisplot-upgrade-qa', '{}'))
+              inode = before.stat().st_ino
+              app.rename(directory/'Original Whisplot.app')
+              subprocess.run(['ditto',directory/'candidate/Whisplot.app',app],check=True)
+              subprocess.run(['open','-n',app],check=True)
+              wait_initialized(before)
+              time.sleep(7)
+              if not process() or before.stat().st_ino != inode or not state(before,note=True):
+                  raise RuntimeError('The signed candidate did not reuse the 0.1.0 database')
+              print('Verified Intel macOS startup after installing 0.1.1 over 0.1.0. The local vault, identity state and original database were retained.')
+          finally:
+              stop()
+          PY
