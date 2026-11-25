@@ -1,0 +1,187 @@
+name: Build macOS 0.1.1 input for local signing
+
+on:
+  push:
+    branches: [codex/build-0.1.1]
+    paths: [.github/workflows/0.1.1-macos-build.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  macos-build:
+    if: github.repository == 'whisplot/whisplot-client'
+    runs-on: macos-26-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 06a2d9737d4b50ca87c796dadc5c6f4cad3a45c9
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.0'
+          cache: true
+      - name: Compile the tested source with public staging configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse 'HEAD^{tree}')" = 381b2130889ba1ffbff8b202562e08190cff1577
+          base64 -D > "$RUNNER_TEMP/whisplot-source.zlib" <<'WHISPLOT_SOURCE'
+          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
+          WHISPLOT_SOURCE
+          python3 - "$RUNNER_TEMP/whisplot-source.zlib" <<'PY'
+          from hashlib import sha256
+          import json, sys, zlib
+          from pathlib import Path
+
+          files = json.loads(zlib.decompress(Path(sys.argv[1]).read_bytes()))
+          for filename, (expected_base, expected_result, edits) in files.items():
+              path = Path(filename)
+              assert not path.is_absolute() and '..' not in path.parts
+              original = path.read_bytes() if path.exists() else b''
+              assert sha256(original).hexdigest() == expected_base, filename
+              lines = original.decode().splitlines(True)
+              for start, end, replacement in reversed(edits):
+                  lines[start:end] = [replacement]
+              result = ''.join(lines).encode()
+              assert sha256(result).hexdigest() == expected_result, filename
+              path.write_bytes(result)
+          PY
+          printf '%s\n' '{"DEFAULT_API_BASE_URL":"https://whisplot-api.whisplot.workers.dev","DEFAULT_REGISTRATION_CODE":"WhisplotMac011ConfigSlot"}' > "$RUNNER_TEMP/staging-defines.json"
+          (
+            cd apps/mobile
+            flutter pub get
+            flutter build macos --release --no-pub --dart-define-from-file="$RUNNER_TEMP/staging-defines.json"
+          )
+          app="apps/mobile/build/macos/Build/Products/Release/Whisplot.app"
+          python3 scripts/build_config.py verify --define-file "$RUNNER_TEMP/staging-defines.json" \
+            --binary "$app/Contents/Frameworks/App.framework/Versions/A/App"
+          oldzip="$RUNNER_TEMP/whisplot-0.4.1.zip"
+          curl -fsSL --retry 2 --max-time 120 'https://github.com/whisplot/whisplot-client/releases/download/v0.1.0/whisplot-0.1.0-build18-macos-universal2.zip' -o "$oldzip"
+          printf '%s  %s\n' '5facd34502630b51a28e7e48e316c0f783098ef4f801d7027da4915cb480435c' "$oldzip" | shasum -a 256 -c -
+          ditto -x -k "$oldzip" "$RUNNER_TEMP/old"
+          mkdir staging
+          python3 - "$app" <<'PY'
+          import hashlib, os, plistlib, subprocess, sys
+          from pathlib import Path
+
+          old = Path(os.environ['RUNNER_TEMP']) / 'old/Whisplot.app'
+          app = Path(sys.argv[1])
+          helper = 'Contents/XPCServices/HelloMentorVaultService.xpc'
+          helper_executable = 'Contents/MacOS/HelloMentorVaultService'
+          signer = '778a1e14354a52cddf47c339728215c0ee86ea52'
+          old_info = plistlib.loads((old / 'Contents/Info.plist').read_bytes())
+          path = app / 'Contents/Info.plist'
+          info = plistlib.loads(path.read_bytes())
+          if info['CFBundleIdentifier'] != old_info['CFBundleIdentifier'] or info['CFBundleVersion'] != '19' or info['CFBundleShortVersionString'] != '0.1.1':
+              raise ValueError('Unexpected Mac bundle identity or build')
+          req = old_info['HMVaultServiceSigningRequirement']
+          if req != f'identifier "com.nearlink.chat.VaultService" and certificate leaf = H"{signer}"':
+              raise ValueError('Unexpected original helper requirement')
+          if not old_info['HMUsesStableVaultService']:
+              raise ValueError('The original release did not enable the expected helper')
+          info['HMUsesStableVaultService'] = True
+          info['HMVaultServiceSigningRequirement'] = req
+          path.write_bytes(plistlib.dumps(info, sort_keys=False))
+          (app / helper).parent.mkdir(exist_ok=True)
+          subprocess.run(['ditto', old / helper, app / helper], check=True)
+          if hashlib.sha256((app / helper / helper_executable).read_bytes()).hexdigest() != '2d78bba6972075ed3989ab4044c2d6c63e2ab54beac02a88e9ad3b7776938385':
+              raise ValueError('Original signed helper differs')
+          requirements = subprocess.run(
+              ['codesign', '-d', '-r-', old], capture_output=True, check=True
+          )
+          text = (requirements.stdout + requirements.stderr).decode()
+          designated = next(line for line in text.splitlines() if line.startswith('designated =>'))
+          expected = f'identifier "com.nearlink.chat" and certificate leaf = H"{signer}"'
+          if designated.partition('=>')[2].strip().lower() != expected.lower():
+              raise ValueError('Original outer app designated requirement differs')
+          subprocess.run(['csreq', '-r', '=' + expected, '-b', 'staging/app-requirements.bin'], check=True)
+          for path, out in ((old, 'staging/app-entitlements.plist'),
+                            (app, 'staging/built-entitlements.plist')):
+              body = subprocess.run(['codesign', '-d', '--entitlements', '-', '--xml', path],
+                                    capture_output=True, check=True).stdout
+              Path(out).write_bytes(body)
+          if plistlib.loads(Path('staging/app-entitlements.plist').read_bytes()) != plistlib.loads(Path('staging/built-entitlements.plist').read_bytes()):
+              raise ValueError('Mac entitlements differ from the old release')
+          Path('staging/built-entitlements.plist').unlink()
+          PY
+          codesign --force --sign - --preserve-metadata=entitlements,flags "$app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" staging/whisplot-macos-local-signing-input.zip
+          (cd staging && shasum -a 256 *.zip *.bin *.plist > SHA256SUMS.txt)
+          codesign --verify --deep --strict "$app"
+          while IFS= read -r -d '' binary; do
+            if file -b "$binary" | grep -q 'Mach-O'; then
+              archs="$(lipo -archs "$binary")"
+              [[ " $archs " == *' x86_64 '* && " $archs " == *' arm64 '* ]]
+            fi
+          done < <(find "$app" -type f -print0)
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('staging/whisplot-macos-local-signing-input.zip') != '' }}
+        with:
+          name: whisplot-0.1.1-build19-macos-local-signing-input
+          path: staging/
+          retention-days: 3
+          if-no-files-found: error
